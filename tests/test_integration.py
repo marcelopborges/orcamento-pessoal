@@ -2,8 +2,7 @@ import pytest
 from datetime import date
 from core.entities import Employee, Funcao, GlobalConfig, EmployeeMonthlyInput
 from core.validators import EmployeeDataValidator, FunctionDataValidator
-from core.services import PayrollService
-from core.payroll_rules import calculate_percentage_bonus
+from core.payroll_rules import PayrollService
 from core.config import get_historical_value
 
 # Em tests/test_integration.py

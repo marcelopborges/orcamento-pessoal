@@ -1,0 +1,29 @@
+{
+  "nome_cenario": "Cenario_QPA_Planejamento_Semestral",
+  "ano_inicio": 2025,
+  "mes_inicio": 8,
+  "duracao_meses": 6,
+  "acoes_headcount": [
+    {
+      "tipo": "ACRESCIMO_QPA",
+      "data_efetivacao": "2025-08-01",
+      "empresa": "Filial SP",
+      "equipe": "Operacao",
+      "id_funcao": "0003",
+      "quantidade": 2,
+      "salario_base_simulado": 3150.0,
+      "valor_vale_transporte_simulado": 110.0,
+      "valor_vale_refeicao_simulado": 310.0,
+      "plano_saude_simulado": 210.0,
+      "outros_beneficios_simulados": 0.0
+    },
+    {
+      "tipo": "REDUCAO_QPA",
+      "data_efetivacao": "2025-12-05",
+      "empresa": "Matriz",
+      "equipe": "Projetos",
+      "id_funcao": "0002",
+      "quantidade": 1
+    }
+  ]
+}

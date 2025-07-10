@@ -1,0 +1,47 @@
+[
+  {
+    "CODIGO_FUNCAO": "1001",
+    "NOME_FUNCAO": "OPERADOR I",
+    "SALARIO": "2500.00"
+  },
+  {
+    "CODIGO_FUNCAO": "4003",
+    "NOME_FUNCAO": "ANALISTA ADMINISTRATIVO I",
+    "SALARIO": "5202.76"
+  },
+  {
+    "CODIGO_FUNCAO": "4206",
+    "NOME_FUNCAO": "FUNCAO DO GERALDO",
+    "SALARIO": "5202.76"
+  },
+  {
+    "CODIGO_FUNCAO": "9009",
+    "NOME_FUNCAO": "GERENTE DE AREA",
+    "SALARIO": "12500.50"
+  },
+  {
+    "CODIGO_FUNCAO": "0001",
+    "NOME_FUNCAO": "Desenvolvedor Backend J\u00fanior",
+    "SALARIO": "4500.00"
+  },
+  {
+    "CODIGO_FUNCAO": "0002",
+    "NOME_FUNCAO": "Gerente de Projeto S\u00eanior",
+    "SALARIO": "6000.00"
+  },
+  {
+    "CODIGO_FUNCAO": "0003",
+    "NOME_FUNCAO": "Motorista Cat. D",
+    "SALARIO": "3000.00"
+  },
+  {
+    "CODIGO_FUNCAO": "0004",
+    "NOME_FUNCAO": "Arquiteto de Solu\u00e7\u00f5es",
+    "SALARIO": "7000.00"
+  },
+  {
+    "CODIGO_FUNCAO": "0005",
+    "NOME_FUNCAO": "Analista de Dados",
+    "SALARIO": "5500.00"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "CHAPA": "03494",
+    "NOME": "GERALDO CANDIDO DE SOUSA",
+    "SITUACAO": "A",
+    "CODIGO_FUNCAO": "4206",
+    "DATA_ADMISSAO": "15/04/2002",
+    "DATA_ADMISSAO_PTS": "15/04/2002",
+    "DATA_NASCIMENTO": "01/01/1980",
+    "SESSAO": "01.01.4.10.01.005",
+    "JORNADA": "220",
+    "CPF": "25216977880",
+    "CENTRO_CUSTO": "104101205",
+    "empresa": "Matriz",
+    "equipe": "Operacao",
+    "funcao": "Motorista",
+    "valor_vale_transporte_mensal": 150.0,
+    "valor_vale_refeicao_mensal": 400.0,
+    "plano_saude_mensal": 300.0,
+    "outros_beneficios_mensais": 0.0
+  }
+]
