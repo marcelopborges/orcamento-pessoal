@@ -1,11 +1,11 @@
 import pytest
-from core.validators import EmployeeDataValidator, DataValidationError
+from core.validators import ValidadorDadosFuncionario, DataValidationError
 import re
 
 # Fixture para criar o validador
 @pytest.fixture
 def validator():
-    return EmployeeDataValidator()
+    return ValidadorDadosFuncionario()
 
 
 # Teste para CPFs válidos

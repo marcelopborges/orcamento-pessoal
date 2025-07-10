@@ -3,14 +3,14 @@
 import csv
 from collections import defaultdict
 from typing import List, Dict, Any
-from core.entities import Employee # Importa o modelo Employee (supondo que está em core/entities.py)
+from core.entities import Funcionario # Importa o modelo Employee (supondo que está em core/entities.py)
 
-class QPAGenerator:
+class GeradorQPA:
     """
     Classe responsável por gerar resumos do Quadro de Pessoal Autorizado (QPA).
     Agrupa funcionários por empresa, equipe e função, e pode exportar para CSV.
     """
-    def generate_qpa_summary(self, employees: List[Employee]) -> List[Dict[str, Any]]:
+    def generate_qpa_summary(self, employees: List[Funcionario]) -> List[Dict[str, Any]]:
         """
         Gera um resumo QPA a partir de uma lista de objetos Employee,
         agrupando por empresa, equipe e função.

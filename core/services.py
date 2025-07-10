@@ -3,8 +3,8 @@
 # Imports necessários para as classes/funções que RESTAM neste arquivo.
 # Se este arquivo contiver o OrcamentoService e FuncionarioService que discutimos antes,
 # eles permanecerão aqui.
-from core.entities import Employee, Funcao, GlobalConfig, EmployeeMonthlyInput
-from core.payroll_rules import PayrollService  # <-- AGORA VOCÊ IMPORTA PayrollService DE ONDE ELE REALMENTE ESTÁ DEFINIDO
+from core.entities import Funcionario, Cargo, ConfiguracaoGlobal, LancamentoMensalFuncionario
+from core.payroll_rules import ServicoFolhaPagamento  # <-- AGORA VOCÊ IMPORTA PayrollService DE ONDE ELE REALMENTE ESTÁ DEFINIDO
 from core import formulas  # Mantenha este import se este arquivo usar funções de formulas diretamente
 from datetime import date
 

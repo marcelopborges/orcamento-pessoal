@@ -1,78 +1,132 @@
-# tests/test_formulas.py
-
 import pytest
 from datetime import date
 from core import formulas # Agora importa o módulo formulas
 
-def test_calculate_hourly_wage_formula():
+def test_calcular_salario_hora_padrao_sucesso():
     """
-    Testa o cálculo puro do salário por hora.
+    Testa o cálculo puro do salário por hora com valores padrão.
     """
-    assert formulas.calculate_hourly_wage_formula(1000.00, 220) == 4.55
-    assert formulas.calculate_hourly_wage_formula(0.00, 220) == 0.00 # Caso de salário zero
-    assert formulas.calculate_hourly_wage_formula(1000.00, 0) == 0.00 # Caso de horas zero para evitar ZeroDivisionError
+    assert formulas.calcular_salario_hora(1000.00, 220) == 4.55
 
-def test_calculate_years_of_service_formula():
+def test_calcular_salario_hora_salario_zero_retorna_zero():
     """
-    Testa a fórmula pura do tempo de serviço.
+    Testa se o cálculo do salário por hora retorna zero quando o salário é zero.
     """
-    start_date = date(2020, 1, 1)
-    end_date = date(2022, 1, 1)
-    years = formulas.calcular_salario_hora_formula(start_date=start_date, end_date=end_date)
-    assert years == pytest.approx(731 / 365.25) # 731 dias entre 2020-01-01 e 2022-01-01
+    assert formulas.calcular_salario_hora(0.00, 220) == 0.00
 
-    # Teste para ano bissexto (2024 é bissexto)
-    start_date_bissexto = date(2024, 1, 1)
-    end_date_bissexto = date(2025, 1, 1)
-    years_bissexto = formulas.calcular_salario_hora_formula(start_date=start_date_bissexto, end_date=end_date_bissexto)
-    assert years_bissexto == pytest.approx(366 / 365.25) # 366 dias em um ano bissexto
-
-def test_calculate_percentage_bonus_formula():
+def test_calcular_salario_hora_horas_zero_retorna_zero():
     """
-    Testa a fórmula pura de cálculo de bônus percentual.
+    Testa se o cálculo do salário por hora retorna zero quando as horas são zero (evita divisão por zero).
     """
-    assert formulas.calculate_percentage_bonus_formula(1500.00, 0.40) == 600.00
-    assert formulas.calculate_percentage_bonus_formula(100.00, 0.10) == 10.00
-    assert formulas.calculate_percentage_bonus_formula(0.00, 0.50) == 0.00
+    assert formulas.calcular_salario_hora(1000.00, 0) == 0.00
 
-def test_calculate_proportional_salary_formula():
+def test_calcular_tempo_servico_anos_completos():
     """
-    Testa a fórmula pura de salário proporcional.
+    Testa a fórmula pura do tempo de serviço para anos completos.
     """
-    assert formulas.calculate_proportional_salary_formula(3000.00, 30, 10) == 2000.00
-    assert formulas.calculate_proportional_salary_formula(1000.00, 30, 0) == 1000.00 # Sem dias não trabalhados
-    assert formulas.calculate_proportional_salary_formula(1000.00, 30, 30) == 0.00 # Todos os dias não trabalhados
-    assert formulas.calculate_proportional_salary_formula(1000.00, 0, 0) == 0.00 # Total de dias no mês zero
+    data_inicio = date(2020, 1, 1)
+    data_fim = date(2022, 1, 1)    
+    anos = formulas.calcular_tempo_servico(data_inicio=data_inicio, data_fim=data_fim)
+    assert anos == pytest.approx(731 / 365.25)
 
-# --- Adicione aqui os testes para as novas fórmulas puras que você colocou em core/formulas.py ---
-def test_calculate_fgts_amount_formula():
-    assert formulas.calculate_fgts_amount_formula(1000, 0.08) == 80.0
-    assert formulas.calculate_fgts_amount_formula(0, 0.08) == 0.0
+def test_calcular_tempo_servico_ano_bissexto_correto():
+    """
+    Testa a fórmula pura do tempo de serviço para incluir ano bissexto.
+    """
+    data_inicio = date(2024, 1, 1)
+    data_fim = date(2025, 1, 1)    
+    anos = formulas.calcular_tempo_servico(data_inicio=data_inicio, data_fim=data_fim)
+    assert anos == pytest.approx(366 / 365.25)
 
-def test_calculate_inss_patronal_formula():
-    assert formulas.calculate_inss_patronal_formula(1000, 0.20) == 200.0
-    assert formulas.calculate_inss_patronal_formula(0, 0.20) == 0.0
+def test_calcular_tempo_servico_mesmo_dia_retorna_zero():
+    """
+    Testa a fórmula pura do tempo de serviço quando início e fim são o mesmo dia.
+    """
+    data_inicio = date(2023, 1, 1)
+    data_fim = date(2023, 1, 1)
+    anos = formulas.calcular_tempo_servico(data_inicio=data_inicio, data_fim=data_fim)
+    assert anos == 0.0
 
-def test_calculate_vacation_provision_formula():
-    # (1000 * (1 + 1/3)) / 12 = 1333.333... / 12 = 111.11 (arredondado para 2 casas)
-    assert formulas.calculate_vacation_provision_formula(1000, (1/3), 12) == pytest.approx(111.11, abs=1e-2)
-    assert formulas.calculate_vacation_provision_formula(0, (1/3), 12) == 0.0
+def test_calcular_bonus_percentual_valor_positivo():
+    """
+    Testa a fórmula pura de cálculo de bônus percentual com valores positivos.
+    """
+    assert formulas.calcular_bonus_percentual(1500.00, 0.40) == 600.00
 
-def test_calculate_thirteenth_salary_provision_formula():
-    # 1000 / 12 = 83.333... = 83.33 (arredondado para 2 casas)
-    assert formulas.calculate_thirteenth_salary_provision_formula(1000, 12) == pytest.approx(83.33, abs=1e-2)
-    assert formulas.calculate_thirteenth_salary_provision_formula(0, 12) == 0.0
+def test_calcular_bonus_percentual_valor_base_zero_retorna_zero():
+    """
+    Testa a fórmula pura de cálculo de bônus percentual com valor base zero.
+    """
+    assert formulas.calcular_bonus_percentual(0.00, 0.50) == 0.00
 
-def test_sum_benefits_formula():
-    assert formulas.sum_benefits_formula(100, 200, 50, 25) == 375.0
-    assert formulas.sum_benefits_formula(0, 0, 0, 0) == 0.0
+def test_calcular_salario_proporcional_dias_trabalhados():
+    """
+    Testa a fórmula pura de salário proporcional com dias não trabalhados.
+    """
+    assert formulas.calcular_salario_proporcional(3000.00, 30, 10) == 2000.00
 
-def test_calculate_total_employee_cost_formula():
-    # Salário + Benefícios + Encargos
-    assert formulas.calculate_total_employee_cost_formula(5000, 375, 1500) == 6875.0
-    assert formulas.calculate_total_employee_cost_formula(0, 0, 0) == 0.0
+def test_calcular_salario_proporcional_sem_dias_nao_trabalhados():
+    """
+    Testa a fórmula pura de salário proporcional sem dias não trabalhados.
+    """
+    assert formulas.calcular_salario_proporcional(1000.00, 30, 0) == 1000.00
 
-def test_calculate_total_proventos_formula():
-    # Salário_Base_ou_Proporcional + Adicional_Insalubridade
-    assert formulas.calculate_total_proventos_formula(2000, 600) == 2600.0
-    assert formulas.calculate_total_proventos_formula(1000, 0) == 1000.0
+def test_calcular_salario_proporcional_todos_dias_nao_trabalhados():
+    """
+    Testa a fórmula pura de salário proporcional quando todos os dias foram não trabalhados.
+    """
+    assert formulas.calcular_salario_proporcional(1000.00, 30, 30) == 0.00
+
+def test_calcular_salario_proporcional_total_dias_mes_zero_retorna_zero():
+    """
+    Testa a fórmula pura de salário proporcional quando o total de dias no mês é zero.
+    """
+    assert formulas.calcular_salario_proporcional(1000.00, 0, 0) == 0.00
+
+def test_calcular_valor_fgts_padrao():
+    assert formulas.calcular_valor_fgts(1000, 0.08) == 80.0
+
+def test_calcular_valor_fgts_salario_base_zero_retorna_zero():
+    assert formulas.calcular_valor_fgts(0, 0.08) == 0.0
+
+def test_calcular_inss_patronal_padrao():
+    assert formulas.calcular_inss_patronal(1000, 0.20) == 200.0
+
+def test_calcular_inss_patronal_salario_base_zero_retorna_zero():
+    assert formulas.calcular_inss_patronal(0, 0.20) == 0.0
+
+def test_calcular_provisao_ferias_padrao():
+    assert formulas.calcular_provisao_ferias(1000, (1/3), 12) == pytest.approx(111.11, abs=1e-2)
+
+def test_calcular_provisao_ferias_salario_base_zero_retorna_zero():
+    assert formulas.calcular_provisao_ferias(0, (1/3), 12) == 0.0
+
+def test_calcular_provisao_decimo_terceiro_salario_padrao():
+    assert formulas.calcular_provisao_decimo_terceiro_salario(1000, 12) == pytest.approx(83.33, abs=1e-2)
+
+def test_calcular_provisao_decimo_terceiro_salario_zero_retorna_zero():
+    assert formulas.calcular_provisao_decimo_terceiro_salario(0, 12) == 0.0
+
+def test_somar_beneficios_todos_valores_positivos():
+    assert formulas.somar_beneficios(100, 200, 50, 25) == 375.0
+
+def test_somar_beneficios_todos_valores_zero_retorna_zero():
+    assert formulas.somar_beneficios(0, 0, 0, 0) == 0.0
+
+def test_calcular_custo_total_funcionario_padrao():
+    assert formulas.calcular_custo_total_funcionario(5000, 375, 1500) == 6875.0
+
+def test_calcular_custo_total_funcionario_todos_zero_retorna_zero():
+    assert formulas.calcular_custo_total_funcionario(0, 0, 0) == 0.0
+
+def test_calcular_total_proventos_padrao():
+    assert formulas.calcular_total_proventos(2000, 600) == 2600.0
+
+def test_calcular_total_proventos_adicional_zero_retorna_salario_base():
+    assert formulas.calcular_total_proventos(1000, 0) == 1000.0
+
+def test_calcular_adicional_periculosidade_formula_padrao():
+    assert formulas.calcular_adicional_periculosidade_formula(5000.00, 0.30) == 1500.00
+
+def test_calcular_adicional_periculosidade_formula_valor_base_zero():
+    assert formulas.calcular_adicional_periculosidade_formula(0.00, 0.30) == 0.00

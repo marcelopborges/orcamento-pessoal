@@ -1,13 +1,13 @@
-# core/entities.py (REVISADO)
 
 from dataclasses import dataclass, field
 from datetime import datetime, date
 from typing import List, Optional, Dict, Any
+from dateutil.relativedelta import relativedelta
 
-# --- Entidades de Funcionário e Funções (Adaptações) ---
+
 
 @dataclass()
-class Employee:
+class Funcionario:
     chapa: str
     nome: str
     situacao: str
@@ -15,8 +15,8 @@ class Employee:
     data_admissao: datetime
     data_admissao_pts: datetime
     data_nascimento: datetime
-    sessao: str
-    jornada: str
+    secao: str
+    carga_horaria_mensal: str
     cpf: str
     centro_custo: str
     empresa: str
@@ -26,8 +26,9 @@ class Employee:
     valor_vale_refeicao_mensal: float
     plano_saude_mensal: float
     outros_beneficios_mensais: float
-    custo_total_mensal: float = 0.0 # Adicione este atributo COM VALOR PADRÃO
-    
+    valor_base_gratificacao_mensal: float = 0.0
+    custo_total_mensal: float = 0.0  
+
     def is_active(self) -> bool:
         """
         Verifica se o funcionário está ativo.
@@ -49,67 +50,69 @@ class Employee:
     pass # Manter a estrutura existente. A "vigência" será tratada na camada de dados.
 
 @dataclass(frozen=True)
-class Funcao:
+class Cargo:
     codigo_funcao: str
     nome_funcao: str
     # ATENÇÃO: Salário aqui é o *padrão*. O salário *vigente* de um funcionário virá do histórico de salários.
     salario: float
-    pass # Manter a estrutura existente. A "vigência" será tratada na camada de dados.
-
-# --- NOVO: Entidade para Gerenciar Parâmetros Históricos (Vigências) ---
+    
 
 @dataclass(frozen=True)
-class HistoricalParameter:
+class ParametroHistorico:
     """ Representa um valor de parâmetro com uma data de vigência de início e fim. """
     id: int 
-    parameter_name: str
-    value: float
-    start_date: date
-    end_date: Optional[date] = None
+    nome_parametro: str
+    valor: float
+    data_inicio: date
+    data_fim: Optional[date] = None
 
     def is_active_on_date(self, check_date: date) -> bool:
         """Verifica se este parâmetro está ativo em uma determinada data."""
-        if self.start_date > check_date:
+        if self.data_inicio > check_date:
             return False
-        if self.end_date and self.end_date < check_date:
+        if self.data_fim and self.data_fim < check_date:
             return False
         return True
 
 # --- Configuração Global (Agora irá *usar* o histórico de parâmetros) ---
 
 @dataclass(frozen=True)
-class GlobalConfig:
+class ConfiguracaoGlobal:
     """
     Configuração global do sistema para uma data de cálculo específica,
     obtendo os valores vigentes dos parâmetros históricos.
     """
-    calculation_date: date
-    minimum_wage: float # Salário Mínimo vigente na calculation_date
-    insalubrity_percent: float # % de insalubridade vigente
-    aliquota_fgts_empresa: float # % FGTS vigente
+    data_calculo: date
+    salario_minimo: float # Salário Mínimo vigente na calculation_date
+    percentual_insalubridade: float # % de insalubridade vigente
+    aliquota_fgts_patronal: float # % FGTS vigente
     aliquota_inss_patronal_media: float # % INSS Empresa vigente
     percentual_terco_ferias: float # % 1/3 férias vigente
     meses_do_ano: int # Meses no ano (fixo ou histórico)
+    horas_jornada_padrao_mensal: int = 220 # Padrão de horas mensais (pode ser ajustado por jornada)
+    percentual_periculosidade: float = 0.30 
+    percentual_adicional_noturno: float = 0.20 
 
 @dataclass
-class EmployeeMonthlyInput:
+class LancamentoMensalFuncionario:
     """ 
     Guarda os inputs variáveis de um funcionário para um mês de cálculo.
     Estes são inputs diretos, não precisam de histórico aqui.
     """
-    extra_hours_50: float = 0.0
-    extra_hours_100: float = 0.0
-    receives_insalubrity: bool = False
-    vacation_days: int = 0
-    # Valores de benefícios específicos do mês, se não vierem do histórico de Employee/GlobalConfig:
-    # valor_vale_transporte_mensal: Optional[float] = 0.0
-    # valor_vale_refeicao_mensal: Optional[float] = 0.0
-    # plano_saude_mensal: Optional[float] = 0.0
-    # outros_beneficios_mensais: Optional[float] = 0.0
+    horas_extras_50_porcento: float = 0.0
+    horas_extras_100_porcento: float = 0.0
+    recebe_insalubridade: bool = False 
+    recebe_periculosidade: bool = False 
+    recebe_adicional_noturno: bool = False 
+    dias_ferias: int = 0 
+    horas_trabalhadas_no_mes: float = 0.0 
+    quantidade_horas_s_aviso: float = 0.0 
+    valor_descanso_semanal_remunerado: float = 0.0 
+    quantidade_horas_adicional_noturno: float = 0.0
 
 
 @dataclass
-class AcaoHeadcount:
+class AcaoQuadroPessoal:
     tipo: str # "ACRESCIMO_QPA" ou "REDUCAO_QPA"
     data_efetivacao: str # Formato YYYY-MM-DD
 
@@ -141,15 +144,15 @@ class AcaoHeadcount:
             raise ValueError("Salário base simulado não pode ser negativo.")
 
 @dataclass
-class CenariodeOrcamento:
+class CenarioOrcamento:
     nome_cenario: str
     ano_inicio: int
     mes_inicio: int
     duracao_meses: int
-    acoes_headcount: List[AcaoHeadcount] = field(default_factory=list)
+    acoes_quadro_pessoal: List[AcaoQuadroPessoal] = field(default_factory=list)
 
-    def adicionar_acao(self, acao: AcaoHeadcount):
-        self.acoes_headcount.append(acao)
+    def adicionar_acao(self, acao: AcaoQuadroPessoal):
+        self.acoes_quadro_pessoal.append(acao)
 
     def get_end_date(self) -> Dict[str, int]:
         end_date_calc = datetime(self.ano_inicio, self.mes_inicio, 1) + relativedelta(months=self.duracao_meses - 1)

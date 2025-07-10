@@ -7,19 +7,14 @@ import datetime
 from datetime import date
 import copy
 import pprint
+from core.entities import Funcionario, Cargo, ConfiguracaoGlobal, LancamentoMensalFuncionario, ParametroHistorico,CenarioOrcamento, AcaoQuadroPessoal
+from core.validators import ValidadorDadosFuncionario, ValidadorDadosCargo, DataValidationError
+from core.payroll_rules import ServicoFolhaPagamento
+from core.history_manager import GerenciadorHistorico
+from core.qpa_generator import GeradorQPA
 
-from core.entities import Employee, Funcao, GlobalConfig, EmployeeMonthlyInput, HistoricalParameter,CenariodeOrcamento, AcaoHeadcount
-from core.validators import EmployeeDataValidator, FunctionDataValidator, DataValidationError
-from core.payroll_rules import PayrollService
-from core.history_manager import HistoryManager
-from core.qpa_generator import QPAGenerator
 
-# (Outros imports como core.formulas não são necessários diretamente no main.py,
-# pois PayrollService já os utiliza.)
-
-# --- Funções Auxiliares de Display e Carregamento (Adaptadas) ---
-
-def display_full_cost_breakdown(employee_name: str, results: dict):
+def exibir_detalhamento_custo_total(employee_name: str, results: dict):
     """Exibe a ficha de cálculo individual, similar ao seu main.py antigo."""
     print("--- Ficha de Cálculo Individual ---")
     print(f"Funcionário: {employee_name}")
@@ -27,7 +22,7 @@ def display_full_cost_breakdown(employee_name: str, results: dict):
     pprint.pprint(results)
     print("-" * 35)
 
-def display_orcamento_mensal(orcamento):
+def exibir_orcamento_mensal(orcamento):
     """Exibe um resumo de um orçamento mensal (do contexto QPA)."""
     if not orcamento:
         print("Orçamento não encontrado.")
@@ -38,7 +33,7 @@ def display_orcamento_mensal(orcamento):
     print(f"  Custo total do orçamento: R$ {orcamento.custo_total_orcamento:.2f}")
     print("-" * 40)
 
-def display_simulacao_scenario(simulacao_resultado: dict): # Tipo do parâmetro ajustado para 'dict'
+def exibir_cenario_simulacao(simulacao_resultado: dict): # Tipo do parâmetro ajustado para 'dict'
     print(f"\n--- Resultado da Simulação do Cenário: {simulacao_resultado['nome_cenario']} ---")
     print(f"  Período: {simulacao_resultado['periodo_simulacao']}")
     print(f"  Custo Total Simulado no Período: R$ {simulacao_resultado['custo_total_simulado']:.2f}")
@@ -51,7 +46,7 @@ def display_simulacao_scenario(simulacao_resultado: dict): # Tipo do parâmetro 
     print("-" * 50)
 
 # Função para carregar dados históricos (já no main.py da última interação)
-def load_historical_data_from_file(file_path: str) -> list[dict]:
+def carregar_dados_historicos_de_arquivo(file_path: str) -> list[dict]:
     """Carrega dados históricos brutos de um arquivo JSON."""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -67,9 +62,9 @@ def load_historical_data_from_file(file_path: str) -> list[dict]:
         return []
 
 # Função para construir GlobalConfig (já no main.py da última interação)
-def build_global_config_for_date(history_manager: HistoryManager, check_date: date) -> GlobalConfig:
+def construir_configuracao_global_para_data(history_manager: GerenciadorHistorico, check_date: date) -> ConfiguracaoGlobal:
     """Constrói uma GlobalConfig para uma data específica a partir do HistoryManager."""
-    active_params = history_manager.get_all_active_parameters_on_date(check_date)
+    active_params = history_manager.obter_todos_parametros_ativos_na_data(check_date)
     
     required_params = [
         "minimum_wage", "insalubrity_percent", "aliquota_fgts_empresa",
@@ -79,25 +74,23 @@ def build_global_config_for_date(history_manager: HistoryManager, check_date: da
         if param not in active_params or active_params[param] is None:
             raise ValueError(f"Parâmetro histórico '{param}' é obrigatório mas não encontrado ou nulo para {check_date}.")
 
-    return GlobalConfig(
-        calculation_date=check_date,
-        minimum_wage=active_params.get("minimum_wage"),
-        insalubrity_percent=active_params.get("insalubrity_percent"),
-        aliquota_fgts_empresa=active_params.get("aliquota_fgts_empresa"),
+    return ConfiguracaoGlobal(
+        data_calculo=check_date,
+        salario_minimo=active_params.get("minimum_wage"),
+        percentual_insalubridade=active_params.get("insalubrity_percent"),
+        aliquota_fgts_patronal=active_params.get("aliquota_fgts_empresa"),
         aliquota_inss_patronal_media=active_params.get("aliquota_inss_patronal_media"),
         percentual_terco_ferias=active_params.get("percentual_terco_ferias"),
         meses_do_ano=active_params.get("meses_do_ano")
     )
 
-# main.py (continuação)
+
 
 def main():
-    # --- Configuração de Caminhos de Arquivos ---
     employee_data_file = "dados_funcionarios.json"
     funcao_salario_file = "dados_funcoes_salario.json"
     historical_params_file = "dados_historicos_parametros.json" # NOVO
-    qpa_scenario_actions_file = "cenario_qpa_acoes.json"
-    
+    qpa_scenario_actions_file = "cenario_qpa_acoes.json"    
     current_qpa_output_file = "qpa_atual_raio_x.csv"
     simulated_qpa_output_file = "qpa_simulado_cenario.csv"
 
@@ -186,12 +179,12 @@ def main():
     print(f"Arquivo de ações de cenário QPA '{qpa_scenario_actions_file}' criado/atualizado.")
 
     # 3. Carregamento de Dados e Inicialização de Serviços
-    employee_validator = EmployeeDataValidator()
-    function_validator = FunctionDataValidator()
+    employee_validator = ValidadorDadosFuncionario()
+    function_validator = ValidadorDadosCargo()
 
     # Carregar dados históricos e criar o HistoryManager
-    historical_raw_data = load_historical_data_from_file(historical_params_file)
-    history_manager = HistoryManager(historical_raw_data)
+    historical_raw_data = carregar_dados_historicos_de_arquivo(historical_params_file)
+    history_manager = GerenciadorHistorico(historical_raw_data)
     
     # NOVO: Validar e processar funções
     functions_list_validated = []
@@ -199,7 +192,7 @@ def main():
         try:
             # Chama o validate para CADA DICIONÁRIO na lista
             validated_func_data = function_validator.validate(func_raw_data)
-            functions_list_validated.append(Funcao(**validated_func_data))
+            functions_list_validated.append(Cargo(**validated_func_data))
         except DataValidationError as e:
             print(f"Erro de validação para função: {func_raw_data.get('CODIGO_FUNCAO', 'N/A')}: {e}. Função ignorada.")
             
@@ -222,11 +215,11 @@ def main():
                 print(f"Aviso: Função '{validated_emp_data['codigo_funcao']}' não encontrada para funcionário {validated_emp_data.get('chapa', 'N/A')}. Funcionário ignorado.")
                 continue
             
-            employee_obj = Employee(
+            employee_obj = Funcionario(
                 chapa=validated_emp_data['chapa'], nome=validated_emp_data['nome'], situacao=validated_emp_data['situacao'],
                 codigo_funcao=validated_emp_data['codigo_funcao'], data_admissao=validated_emp_data['data_admissao'],
                 data_admissao_pts=validated_emp_data['data_admissao_pts'], data_nascimento=validated_emp_data['data_nascimento'],
-                sessao=validated_emp_data['sessao'], jornada=validated_emp_data['jornada'], cpf=validated_emp_data['cpf'],
+                secao=validated_emp_data['sessao'], carga_horaria_mensal=validated_emp_data['jornada'], cpf=validated_emp_data['cpf'],
                 centro_custo=validated_emp_data['centro_custo'],
                 empresa=validated_emp_data.get('empresa', ''), # Usar .get() para campos opcionais caso seu JSON de exemplo não os tenha para todos
                 equipe=validated_emp_data.get('equipe', ''),
@@ -246,29 +239,27 @@ def main():
         print("Nenhum funcionário válido carregado. O programa será encerrado.")
         exit(1)
     # Instanciar o PayrollService
-    payroll_service = PayrollService()
+    payroll_service = ServicoFolhaPagamento()
 
     # --- 4. Exemplo de Cálculo Individual (do seu main.py antigo) ---
     print("\n--- Demonstração de Cálculo Individual (Raio-X) ---")
     geraldo_employee = next((e for e in employees_list if e.chapa == "03494"), None)
     if geraldo_employee:
-        # Precisamos de GlobalConfig para a data de cálculo do Geraldo
-        # Use a data de cálculo do cenário ou uma data fixa para este exemplo.
         geraldo_calculation_date = date(2025, 4, 30)
-        geraldo_global_config = build_global_config_for_date(history_manager, geraldo_calculation_date)
+        geraldo_global_config = construir_configuracao_global_para_data(history_manager, geraldo_calculation_date)
         
         # MonthlyInput para o Geraldo
-        geraldo_monthly_input = EmployeeMonthlyInput(
-            vacation_days=10, receives_insalubrity=True
+        geraldo_monthly_input = LancamentoMensalFuncionario(
+            dias_ferias=10, recebe_insalubridade=True
         )
 
-        geraldo_results = payroll_service.calculate_full_cost_breakdown(
+        geraldo_results = payroll_service.calcular_detalhamento_custo_total(
             employee=geraldo_employee,
             functions=list(functions_map.values()), # Passa a lista de objetos Funcao
             global_config=geraldo_global_config,
             monthly_input=geraldo_monthly_input
         )
-        display_full_cost_breakdown(geraldo_employee.nome, geraldo_results)
+        exibir_detalhamento_custo_total(geraldo_employee.nome, geraldo_results)
     else:
         print("Funcionário Geraldo não encontrado nos dados carregados.")
 
@@ -278,7 +269,7 @@ def main():
     # Para o QPA atual, calculamos o custo total de cada funcionário
     # para a data de cálculo atual (ex: hoje ou data do início do cenário)
     qpa_current_date = date.today()
-    qpa_global_config = build_global_config_for_date(history_manager, qpa_current_date)
+    qpa_global_config = construir_configuracao_global_para_data(history_manager, qpa_current_date)
 
     employees_with_calculated_cost = []
     for emp in employees_list:
@@ -286,10 +277,10 @@ def main():
         # Para calcular o custo, precisamos de um monthly_input.
         # Para o raio-x, podemos usar um monthly_input padrão (sem férias, insalubridade, etc.)
         # ou um input real se você tiver dados mensais para todos.
-        default_monthly_input_for_qpa = EmployeeMonthlyInput() # Padrão
+        default_monthly_input_for_qpa = LancamentoMensalFuncionario() # Padrão
         
         # Chame o cálculo para cada funcionário
-        payroll_service.calculate_full_cost_breakdown(
+        payroll_service.calcular_detalhamento_custo_total(
             employee=emp_copy,
             functions=list(functions_map.values()),
             global_config=qpa_global_config,
@@ -297,7 +288,7 @@ def main():
         )
         employees_with_calculated_cost.append(emp_copy)
 
-    qpa_generator = QPAGenerator()
+    qpa_generator = GeradorQPA()
     qpa_actual_data = qpa_generator.generate_qpa_summary(employees_with_calculated_cost)
     qpa_generator.export_qpa_to_csv(qpa_actual_data, current_qpa_output_file)
 
@@ -308,12 +299,12 @@ def main():
         with open(qpa_scenario_actions_file, 'r', encoding='utf-8') as f:
             qpa_scenario_data = json.load(f)
         
-        cenario_qpa = CenariodeOrcamento(
+        cenario_qpa = CenarioOrcamento(
             nome_cenario=qpa_scenario_data['nome_cenario'],
             ano_inicio=qpa_scenario_data['ano_inicio'],
             mes_inicio=qpa_scenario_data['mes_inicio'],
             duracao_meses=qpa_scenario_data['duracao_meses'],
-            acoes_headcount=[AcaoHeadcount(**acao) for acao in qpa_scenario_data['acoes_headcount']]
+            acoes_quadro_pessoal=[AcaoQuadroPessoal(**acao) for acao in qpa_scenario_data['acoes_headcount']]
         )
         
         # Agora o OrcamentoService precisa de PayrollService e HistoryManager para construir GlobalConfig
@@ -343,11 +334,11 @@ def main():
             ano_simulacao = current_sim_date.year
 
             # Construir GlobalConfig para o mês da simulação
-            current_sim_global_config = build_global_config_for_date(history_manager, current_sim_date)
+            current_sim_global_config = construir_configuracao_global_para_data(history_manager, current_sim_date)
 
             # Aplicar ações de headcount para o mês atual
             acoes_do_mes = [
-                acao for acao in cenario_qpa.acoes_headcount
+                acao for acao in cenario_qpa.acoes_quadro_pessoal
                 if datetime.datetime.strptime(acao.data_efetivacao, "%Y-%m-%d").year == ano_simulacao and
                    datetime.datetime.strptime(acao.data_efetivacao, "%Y-%m-%d").month == mes_simulacao
             ]
@@ -365,7 +356,7 @@ def main():
                             print(f"Aviso: Função simulada '{acao.id_funcao}' não encontrada. Contratação ignorada.")
                             continue
 
-                        simulated_employee = Employee(
+                        simulated_employee = Funcionario(
                             chapa=new_chapa,
                             nome=f"Simulado {simulated_funcao.nome_funcao} {new_chapa}",
                             situacao="A", # Ativo
@@ -373,7 +364,7 @@ def main():
                             data_admissao=datetime.datetime.strptime(acao.data_efetivacao, "%Y-%m-%d"),
                             data_admissao_pts=datetime.datetime.strptime(acao.data_efetivacao, "%Y-%m-%d"),
                             data_nascimento=datetime.datetime(1990, 1, 1), # Data de nascimento genérica
-                            sessao="99.99.9.99.99.99999", jornada="220", cpf="00000000000", # Dados genéricos
+                            secao="99.99.9.99.99.99999", carga_horaria_mensal="220", cpf="00000000000", # Dados genéricos
                             centro_custo="000000000",
                             empresa=acao.empresa, equipe=acao.equipe, funcao=simulated_funcao.nome_funcao,
                             valor_vale_transporte_mensal=acao.valor_vale_transporte_simulado,
@@ -413,9 +404,9 @@ def main():
                 emp_copy_for_calc = copy.deepcopy(emp_obj)
                 # Para o cálculo do custo, usar um monthly_input padrão ou real para o mês simulado
                 # O monthly_input_for_sim é simplificado. Em cenário real, viria de dados históricos.
-                monthly_input_for_sim = EmployeeMonthlyInput() # Default para simulação
+                monthly_input_for_sim = LancamentoMensalFuncionario() # Default para simulação
                 
-                payroll_service.calculate_full_cost_breakdown(
+                payroll_service.calcular_detalhamento_custo_total(
                     employee=emp_copy_for_calc,
                     functions=list(functions_map.values()),
                     global_config=current_sim_global_config, # Usa a config do mês da simulação
@@ -451,7 +442,7 @@ def main():
             "custo_total_simulado": sum(r["custo_total_orcamento"] for r in simulacao_mensal_results.values()),
             "detalhes_mensais": simulacao_mensal_results
         }
-        display_simulacao_scenario(final_sim_data)
+        exibir_cenario_simulacao(final_sim_data)
 
 
         # Geração do QPA resultante da simulação (para o último mês)

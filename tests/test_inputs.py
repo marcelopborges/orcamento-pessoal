@@ -1,33 +1,36 @@
 import pytest
-from core.entities import EmployeeMonthlyInput
+from core.entities import LancamentoMensalFuncionario
 
-def test_create_employee_monthly_input_with_defaults():
+def test_criar_lancamento_mensal_funcionario_com_valores_padrao():
     """ 
     Testa a criação da entidade de input mensal com valores padrão. 
     """
-    # Arrange & Act
-    monthly_input = EmployeeMonthlyInput()
+    
+    lancamento_mensal = LancamentoMensalFuncionario()
+    assert lancamento_mensal.horas_extras_50_porcento == 0.0 
+    assert lancamento_mensal.horas_extras_100_porcento == 0.0
+    assert lancamento_mensal.recebe_insalubridade is False
+    assert lancamento_mensal.dias_ferias == 0
+    assert lancamento_mensal.horas_trabalhadas_no_mes == 0.0
+    assert lancamento_mensal.quantidade_horas_s_aviso == 0.0
 
-    # Assert
-    assert monthly_input.extra_hours_50 == 0.0
-    assert monthly_input.extra_hours_100 == 0.0
-    assert monthly_input.receives_insalubrity is False
-    assert monthly_input.vacation_days == 0
 
-def test_create_employee_monthly_input_with_specific_values():
+def test_criar_lancamento_mensal_funcionario_com_valores_especificos():
     """ 
     Testa a criação da entidade de input mensal com valores específicos. 
     """
-    # Arrange & Act
-    # Aqui simulamos um mês em que o funcionário teve inputs específicos.
-    monthly_input = EmployeeMonthlyInput(
-        extra_hours_50=10.5,
-        receives_insalubrity=True,
-        vacation_days=15
+    lancamento_mensal = LancamentoMensalFuncionario(
+        horas_extras_50_porcento=10.5,
+        recebe_insalubridade=True,
+        dias_ferias=15,
+        horas_trabalhadas_no_mes=160.0,
+        quantidade_horas_s_aviso=8.0
     )
 
     # Assert
-    assert monthly_input.extra_hours_50 == 10.5
-    assert monthly_input.receives_insalubrity is True
-    assert monthly_input.extra_hours_100 == 0.0
-    assert monthly_input.vacation_days == 15
+    assert lancamento_mensal.horas_extras_50_porcento == 10.5
+    assert lancamento_mensal.recebe_insalubridade is True
+    assert lancamento_mensal.horas_extras_100_porcento == 0.0
+    assert lancamento_mensal.dias_ferias == 15    
+    assert lancamento_mensal.horas_trabalhadas_no_mes == 160.0
+    assert lancamento_mensal.quantidade_horas_s_aviso == 8.0

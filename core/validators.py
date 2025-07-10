@@ -13,10 +13,10 @@ class DataValidationError(Exception):
     """
     pass
 
-class EmployeeDataValidator:
+class ValidadorDadosFuncionario:
     def __init__(self):
         # Mantém required_keys em MAIÚSCULAS, como já está no seu código.
-        self.required_keys = ["CHAPA","NOME","SITUACAO","CODIGO_FUNCAO","DATA_ADMISSAO","DATA_ADMISSAO_PTS","DATA_NASCIMENTO","SESSAO","JORNADA","CPF","CENTRO_CUSTO"]
+        self.required_keys = ["CHAPA","NOME","SITUACAO","CODIGO_FUNCAO","DATA_ADMISSAO","DATA_ADMISSAO_PTS","DATA_NASCIMENTO","SECAO","CARGA_HORARIA_MENSAL","CPF","CENTRO_CUSTO"]
         self.validation_rules = {
             "CHAPA": self._validate_CHAPA,
             "NOME": self._validate_string,
@@ -25,10 +25,10 @@ class EmployeeDataValidator:
             "DATA_ADMISSAO": self._validate_date_format,
             "DATA_ADMISSAO_PTS": self._validate_date_format,
             "DATA_NASCIMENTO": self._validate_date_format,
-            "SESSAO": self._validate_SESSAO_format,
-            "JORNADA": self._validate_JORNADA_format,
+            "SECAO": self._validate_SESSAO_format,
+            "CARGA_HORARIA_MENSAL": self._validate_JORNADA_format,
             "CPF": self._validate_CPF_format,
-            "CENTRO_CUSTO": self._validate_CENTRO_CUSTO_format
+            "CENTRO_CUSTO": self._validate_centro_custo_format
         }
         # Adiciona campos de agrupamento e benefícios aos required_keys e validation_rules
         self.required_keys.extend([
@@ -139,7 +139,7 @@ class EmployeeDataValidator:
 
         return True
     
-    def _validate_CENTRO_CUSTO_format(self, value: Any) -> str:
+    def _validate_centro_custo_format(self, value: Any) -> str:
         if not isinstance(value, str) or not re.match(r'^\d{9}$', value):
             raise DataValidationError("O campo 'CENTRO_CUSTO' deve ser uma string de 9 dígitos numéricos.")
         return value.strip()
@@ -190,7 +190,7 @@ class EmployeeDataValidator:
         # Converte as chaves de volta para minúsculas para o dicionário de retorno
         return {k.lower(): v for k, v in validated_data.items()}
 
-class FunctionDataValidator:
+class ValidadorDadosCargo:
     """Valida os dados de entrada para a entidade Funcao."""
     def __init__(self):
         # Mantenha required_keys em MAIÚSCULAS
